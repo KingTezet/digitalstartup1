@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NotaKampus — Materi kuliah senyaman buku fisik, versi digital</title>
+  <meta name="description" content="Landing page smoke test untuk solusi pengelola materi kuliah: unggah, anotasi digital, sinkronisasi catatan.">
+  <!-- Font (fallback ke system font jika offline) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* =========================
+       DESIGN TOKENS
+       ========================= */
+    :root{
+      /* Blues */
+      --primary-300: hsl(210 100% 72%);
+      --primary-400: hsl(210 92% 60%);
+      --primary-500: hsl(210 92% 56%);
+      --primary-600: hsl(210 92% 48%);
+      --primary-700: hsl(210 92% 38%);
+      --cyan-400:    hsl(195 100% 44%);
+      /* Neutrals (light) */
+      --bg:          hsl(220 25% 97%);
+      --surface:     hsl(0 0% 100%);
+      --text:        hsl(220 28% 12%);
+      --muted:       hsl(220 10% 46%);
+      --ring:        hsl(210 92% 60% / .35);
+      --shadow:      0 10px 30px hsl(210 40% 20% / .08), 0 2px 8px hsl(210 40% 20% / .05);
+      --radius:      14px;
+      --radius-lg:   18px;
+      --maxw:        1160px;
+      --gap:         clamp(16px, 3vw, 28px);
+      --grad-hero:   radial-gradient(1200px 600px at 15% -10%, hsl(210 92% 56% / .25) 0, transparent 50%),
+                     radial-gradient(900px 600px at 85% -10%, hsl(195 100% 44% / .20) 0, transparent 55%),
+                     linear-gradient(180deg, hsl(220 25% 98%), hsl(220 25% 96%));
+      --grad-cta:    linear-gradient(135deg, var(--primary-500), var(--cyan-400));
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:       hsl(220 18% 8%);
+        --surface:  hsl(220 18% 12%);
+        --text:     hsl(220 20% 96%);
+        --muted:    hsl(220 12% 72%);
+        --shadow:   0 10px 30px hsl(210 40% 5% / .55), 0 2px 10px hsl(210 40% 5% / .35);
+        --grad-hero: radial-gradient(1200px 600px at 10% -10%, hsl(210 92% 56% / .18) 0, transparent 55%),
+                     radial-gradient(800px 600px at 85% -5%, hsl(195 100% 44% / .15) 0, transparent 55%),
+                     linear-gradient(180deg, hsl(220 18% 10%), hsl(220 18% 9%));
+      }
+    }
+
+    /* =========================
+       BASE + RESET
+       ========================= */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    html { scroll-behavior: smooth; }
+    body{
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      text-rendering: optimizeLegibility;
+    }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    .container{ width: min(100% - 32px, var(--maxw)); margin-inline: auto; }
+
+    /* Focus visible */
+    :focus-visible{
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+
+    /* =========================
+       NAVBAR
+       ========================= */
+    .nav{
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: saturate(140%) blur(10px);
+      background: color-mix(in oklab, var(--bg), transparent 15%);
+      border-bottom: 1px solid color-mix(in oklab, var(--text), transparent 92%);
+    }
+    .nav .wrap{
+      display:flex; align-items:center; justify-content:space-between;
+      height: 64px;
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center; font-weight:800; letter-spacing:.2px;
+    }
+    .brand .logo{
+      width: 32px; height: 32px; border-radius: 10px;
+      background: var(--grad-cta); box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+    }
+    .brand .logo::after{
+      /* subtle shine */
+      content:""; position:absolute; inset:0;
+      background: radial-gradient(180px 30px at -20% -20%, #fff6 0, transparent 60%);
+    }
+    .nav a{
+      font-weight:600; opacity:.85;
+    }
+    .nav .links{
+      display:flex; gap: clamp(10px, 2.5vw, 22px); align-items:center;
+    }
+    .nav .links a:hover{ opacity:1 }
+    .nav .cta-mini{
+      padding:10px 14px; border-radius: 10px;
+      background: var(--grad-cta); color:white; box-shadow: var(--shadow);
+      border: 0; font-weight:700; letter-spacing:.2px;
+    }
+
+    /* Active section indicator */
+    .nav .links a.active{
+      position: relative; opacity: 1;
+    }
+    .nav .links a.active::after{
+      content:""; position:absolute; left:0; right:0; bottom:-14px; height:3px; border-radius:999px;
+      background: var(--grad-cta);
+    }
+
+    /* =========================
+       HERO
+       ========================= */
+    .hero{
+      position: relative; isolation: isolate;
+      background: var(--grad-hero);
+      padding: clamp(40px, 6vw, 80px) 0 clamp(32px, 6vw, 64px);
+      overflow: clip;
+    }
+    .scroll-progress{
+      position: fixed; inset: 0 0 auto 0; height: 3px; background: var(--grad-cta);
+      transform-origin: left; transform: scaleX(0); z-index: 60;
+    }
+    .hero .container{
+      display: grid; gap: var(--gap);
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+    }
+    @media (max-width: 960px){
+      .hero .container{ grid-template-columns: 1fr; }
+    }
+
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 12px; border-radius: 999px; font-weight:700; font-size: 14px;
+      color: var(--primary-700);
+      background: color-mix(in oklab, var(--primary-300), transparent 80%);
+      border: 1px dashed color-mix(in oklab, var(--primary-400), transparent 40%);
+    }
+    .hero h1{
+      font-size: clamp(28px, 5.2vw, 56px);
+      line-height: 1.08; margin: 14px 0 10px; letter-spacing:-.015em;
+    }
+    .hero p.lead{
+      font-size: clamp(16px, 1.7vw, 19px);
+      color: var(--muted); margin: 0 0 24px;
+      max-width: 56ch;
+    }
+
+    .hero .cta-row{
+      display:flex; gap:12px; flex-wrap: wrap; align-items: center;
+      margin: 16px 0 10px;
+    }
+    .input{
+      display:flex; gap:10px; align-items:center; background: var(--surface);
+      border: 1px solid color-mix(in oklab, var(--text), transparent 88%);
+      border-radius: 12px; padding: 6px; box-shadow: var(--shadow);
+    }
+    .input input{
+      border:0; background: transparent; padding: 10px 12px; min-width: 260px;
+      font: inherit; color: inherit;
+    }
+    .input input::placeholder{ color: color-mix(in oklab, var(--muted), transparent 30%); }
+    .btn{
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 12px 16px; border-radius: 12px; border: 0; cursor: pointer;
+      font-weight: 800; letter-spacing:.2px; transition: transform .08s ease;
+      box-shadow: var(--shadow);
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn.primary{ background: var(--grad-cta); color: white; }
+    .btn.ghost{ background: color-mix(in oklab, var(--surface), transparent 0%); border:1px solid color-mix(in oklab, var(--text), transparent 85%); }
+
+    .hero .meta{
+      display:flex; gap: 18px; align-items:center; flex-wrap: wrap; color: var(--muted);
+      font-size: 14px; margin-top: 10px;
+    }
+    .hero .meta .dot{ width:6px; height:6px; border-radius:50%; background: var(--primary-500); display:inline-block; }
+    .hero-visual{
+      position: relative; padding: clamp(10px, 2vw, 20px);
+    }
+    .device{
+      border-radius: 22px; background: var(--surface);
+      border: 1px solid color-mix(in oklab, var(--text), transparent 88%); box-shadow: var(--shadow);
+      overflow: hidden; transform-style: preserve-3d; perspective: 1000px; will-change: transform;
+    }
+    .device .topbar{
+      display:flex; align-items:center; gap:8px; padding: 12px 14px; background: linear-gradient(180deg, color-mix(in oklab, var(--surface), white 8%), var(--surface));
+      border-bottom: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+    }
+    .dot3{ display:flex; gap:6px; }
+    .dot3 span{ width:10px; height:10px; border-radius:50%; }
+    .dot3 span:nth-child(1){ background: #ff5f56; }
+    .dot3 span:nth-child(2){ background: #ffbd2e; }
+    .dot3 span:nth-child(3){ background: #27c93f; }
+
+    .doc{
+      position: relative; padding: 22px; display:grid; gap: 14px; height: 420px; overflow:auto;
+      background:
+        linear-gradient(transparent 0 18px, color-mix(in oklab, var(--text), transparent 92%) 18px 19px, transparent 19px),
+        linear-gradient(90deg, color-mix(in oklab, var(--text), transparent 92%) 0 1px, transparent 1px),
+        #fff2;
+      background-size: 100% 19px, 1ch 100%;
+    }
+    .doc .line{ height: 16px; border-radius: 6px; background: color-mix(in oklab, var(--text), transparent 88%); }
+    .doc .line.w{ width: 90%; } .doc .line.m{ width: 70%; } .doc .line.s{ width: 45%; }
+    .highlight{
+      background: linear-gradient(90deg, color-mix(in oklab, #ffe682, transparent 0%) 0, #ffe682 28%, #ffe682 70%, color-mix(in oklab, #ffe682, transparent 0%) 100%);
+      border-radius: 4px; padding: 3px 4px; box-decoration-break: clone;
+      animation: none;
+    }
+    .sticky{
+      position: absolute; right: 16px; bottom: 16px;
+      width: 160px; background: #fff3; backdrop-filter: blur(4px);
+      border: 1px dashed color-mix(in oklab, var(--text), transparent 70%);
+      border-radius: 10px; padding: 10px 12px; font-size: 12px;
+      transform: translateZ(40px) rotate(-1deg);
+    }
+    .demo-ctrl{
+      position:absolute; inset:auto 14px 14px auto; display:flex; gap:8px;
+      background: color-mix(in oklab, var(--surface), transparent 0%); border:1px solid color-mix(in oklab, var(--text), transparent 88%);
+      border-radius: 999px; padding: 6px; box-shadow: var(--shadow);
+    }
+
+    /* Reveal on scroll (IntersectionObserver toggles .revealed) */
+    .reveal{ opacity: 0; transform: translateY(10px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.revealed{ opacity: 1; transform: translateY(0); }
+
+    /* =========================
+       SECTIONS
+       ========================= */
+    section{ padding: clamp(40px, 6vw, 80px) 0; }
+    .section-title{
+      font-size: clamp(22px, 3vw, 34px); margin: 0 0 10px; letter-spacing:-.01em;
+    }
+    .section-kicker{ color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .14em; font-size: 12px; }
+    .grid-2{ display:grid; gap: var(--gap); grid-template-columns: 1fr 1fr; }
+    @media (max-width: 900px){ .grid-2{ grid-template-columns: 1fr; } }
+    .card{
+      background: var(--surface); border: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+      border-radius: var(--radius); box-shadow: var(--shadow); padding: clamp(16px, 2.4vw, 22px);
+    }
+    .card h3{ margin-top: 0; }
+    .check{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; background: var(--primary-500); color: white; font-size: 14px; font-weight: 800; }
+
+    /* Timeline / stepper */
+    .stepper{ display:grid; gap: 14px; }
+    .step{ display:grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+    .step .num{
+      width: 26px; height: 26px; border-radius: 8px; display:grid; place-items:center; font-weight:800; color:white;
+      background: var(--grad-cta); box-shadow: var(--shadow);
+    }
+    .step p{ margin: 4px 0 0; color: var(--muted); }
+
+    /* Details for 5 Whys */
+    details{ border: 1px solid color-mix(in oklab, var(--text), transparent 88%); background: var(--surface); border-radius: 12px; padding: 12px 14px; }
+    details + details{ margin-top: 10px; }
+    details[open]{ border-color: color-mix(in oklab, var(--primary-500), transparent 30%); box-shadow: var(--shadow); }
+    summary{ list-style: none; cursor: pointer; font-weight: 700; display:flex; align-items:center; gap:10px; }
+    summary::marker, summary::-webkit-details-marker { display:none; }
+    .chev{ transition: transform .2s ease; }
+    details[open] .chev{ transform: rotate(90deg); }
+
+    .quote{
+      border-radius: var(--radius-lg);
+      border: 1px solid color-mix(in oklab, var(--text), transparent 88%);
+      background:
+        radial-gradient(800px 300px at 10% 0%, hsl(210 92% 56% / .09), transparent 50%),
+        var(--surface);
+      padding: clamp(18px, 2.8vw, 26px);
+      box-shadow: var(--shadow);
+      font-size: clamp(16px, 1.8vw, 18px);
+    }
+    .quote strong{ color: var(--primary-600); }
+
+    /* CTA bottom */
+    .cta{
+      background: linear-gradient(180deg, color-mix(in oklab, var(--primary-500), transparent 88%), transparent 50%), var(--surface);
+      border: 1px solid color-mix(in oklab, var(--text), transparent 90%);
+      border-radius: 18px; box-shadow: var(--shadow); padding: clamp(18px, 4vw, 28px);
+      display:grid; gap: 14px; justify-items: start;
+    }
+
+    /* Footer + to-top */
+    footer{ color: var(--muted); font-size: 14px; padding: 24px 0 60px; }
+    .to-top{
+      position: fixed; right: 18px; bottom: 18px; z-index: 45;
+      width: 44px; height: 44px; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--text), transparent 85%);
+      background: var(--surface); box-shadow: var(--shadow); display:grid; place-items:center; cursor:pointer; opacity:0; transform: translateY(10px); transition: all .3s ease;
+    }
+    .to-top.show{ opacity:1; transform: translateY(0); }
+
+    /* Animations */
+    @keyframes shimmer { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+    @keyframes floaty { from { transform: translateY(0) } 50% { transform: translateY(-6px) } to { transform: translateY(0) } }
+    @keyframes highlightFlow { from { background-size: 0% 100% } to { background-size: 100% 100% } }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      html{ scroll-behavior: auto; }
+      .reveal{ transition: none; }
+      .device, .to-top{ transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  <!-- NAV -->
+  <nav class="nav" aria-label="Navigasi utama">
+    <div class="container wrap">
+      <a href="#" class="brand" aria-label="Beranda NotaKampus">
+        <span class="logo" aria-hidden="true"></span>
+        <span>NotaKampus <span style="color:var(--primary-500)">βeta</span></span>
+      </a>
+      <div class="links" role="menubar" aria-label="Tautan bagian">
+        <a role="menuitem" href="#empati">Empati</a>
+        <a role="menuitem" href="#whys">Akar Masalah</a>
+        <a role="menuitem" href="#definisi">Definisi</a>
+        <a role="menuitem" href="#solusi">Solusi</a>
+        <a role="menuitem" href="#validasi">Validasi</a>
+        <a role="menuitem" class="cta-mini" href="#daftar">Daftar</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="container">
+      <div>
+        <span class="badge reveal">Smoke Test • Landing Page</span>
+        <h1 class="reveal" style="transition-delay: .05s">
+          Materi kuliah <em style="font-style:normal;color:var(--primary-600)">senyaman buku fisik</em> — versi digital.
+        </h1>
+        <p class="lead reveal" style="transition-delay:.1s">
+          Kelola <strong>buku</strong>, <strong>modul</strong>, dan <strong>catatan</strong> dalam satu tempat dengan
+          anotasi yang terasa alami: stabilo, coretan margin, melipat halaman, hingga sinkronisasi lintas perangkat.
+        </p>
+
+        <!-- FORM CTA -->
+        <form class="cta-row reveal" id="signupForm" aria-labelledby="cta-title" autocomplete="on" novalidate>
+          <label class="visually-hidden" id="cta-title">Daftar untuk akses awal</label>
+          <div class="input">
+            <!-- mail icon -->
+            <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v.4l10 6.25L22 6.4V6a2 2 0 0 0-2-2m0 4.2l-8 5L4 8.2V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+            <input id="email" name="email" type="email" placeholder="Email mahasiswa kamu" aria-label="Email"
+                   required inputmode="email" autocomplete="email" />
+          </div>
+          <div class="input" role="group" aria-label="Pilih jenis akses">
+            <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer">
+              <input type="radio" name="mode" value="Akses awal" checked /> Akses awal
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer">
+              <input type="radio" name="mode" value="Beta tester" /> Beta tester
+            </label>
+          </div>
+          <button class="btn primary" type="submit">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M2 21V3l19 9z"/></svg>
+            Daftar Gratis
+          </button>
+          <button class="btn ghost" type="button" id="scrollSolusi">
+            Lihat Demo Singkat
+          </button>
+          <div id="formMsg" role="status" aria-live="polite" style="width:100%"></div>
+        </form>
+
+        <div class="meta reveal" style="transition-delay:.15s">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="countTxt">Mahasiswa tertarik: 0</span>
+          <span>•</span>
+          <span>Tanpa spam • Bisa berhenti kapan saja</span>
+        </div>
+      </div>
+
+      <!-- Visual mockup dengan interaksi "anotasi" -->
+      <div class="hero-visual reveal" style="transition-delay:.05s">
+        <div class="device" data-tilt>
+          <div class="topbar">
+            <div class="dot3" aria-hidden="true"><span></span><span></span><span></span></div>
+            <strong style="margin-left:6px">Preview Anotasi</strong>
+          </div>
+          <div class="doc" id="docArea" aria-label="Pratinjau dokumen dengan anotasi">
+            <div class="line w"></div>
+            <div class="line m"></div>
+            <div class="line w"></div>
+            <div class="line s"></div>
+            <div class="line w"></div>
+            <span class="highlight" id="hl1">anotasi digital</span>
+            <div class="line m"></div>
+            <div class="line w"></div>
+            <div class="line s"></div>
+            <span class="highlight" id="hl2">menandai & melipat halaman</span>
+            <div class="line m"></div>
+            <div class="line w"></div>
+            <div class="sticky" id="sticky">Catatan: fokus ke Bab 3 — ringkas poin penting.</div>
+          </div>
+          <div class="demo-ctrl">
+            <button class="btn ghost" type="button" id="playDemo" title="Putar demo anotasi">▶️</button>
+            <button class="btn ghost" type="button" id="resetDemo" title="Reset demo">↺</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- EMPATI -->
+  <section id="empati" class="container reveal">
+    <div class="section-kicker">1. Tahap Empati</div>
+    <h2 class="section-title">Memahami perilaku mahasiswa secara nyata</h2>
+    <div class="grid-2">
+      <article class="card" data-tilt>
+        <h3>Observasi Langsung (Observasi Kontekstual)</h3>
+        <p><strong>Yang diamati:</strong></p>
+        <ul>
+          <li>Bagaimana mahasiswa membawa tas kuliah (apakah penuh dengan buku fisik atau kombinasi dengan perangkat digital).</li>
+          <li>Kebiasaan mereka saat belajar di kelas/perpustakaan, misalnya lebih sering membuka buku fisik dibanding laptop/tablet.</li>
+          <li>Momen ketika mereka memilih mencetak materi digital menjadi kertas.</li>
+        </ul>
+        <p><strong>Tujuan:</strong> Mengetahui pola perilaku nyata mahasiswa dalam menggunakan materi kuliah, bukan hanya berdasarkan asumsi.</p>
+      </article>
+
+      <article class="card" data-tilt>
+        <h3>Wawancara Mendalam (User Interview)</h3>
+        <p><strong>Pertanyaan yang diajukan:</strong></p>
+        <ul>
+          <li>“Ceritakan bagaimana biasanya Anda menyiapkan materi untuk kuliah.”</li>
+          <li>“Apa alasan Anda tetap mencetak modul atau buku meskipun sudah ada versi digital?”</li>
+          <li>“Apa tantangan terbesar yang Anda hadapi saat belajar dengan laptop atau tablet?”</li>
+          <li>“Kapan terakhir kali Anda merasa materi digital tidak cukup membantu, sehingga Anda kembali menggunakan buku fisik?”</li>
+        </ul>
+        <p><strong>Tujuan:</strong> Menggali <em>pain point</em> tersembunyi: kenyamanan membaca, kesulitan anotasi digital, atau masalah kesehatan mata.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ROOT CAUSE / 5 WHYS -->
+  <section id="whys" class="container reveal">
+    <div class="section-kicker">2. Root Cause Analysis (5 Whys)</div>
+    <h2 class="section-title">Mengapa mahasiswa masih sering menggunakan materi fisik?</h2>
+    <p class="card">Pernyataan masalah awal: <strong>Mahasiswa masih sering menggunakan materi fisik.</strong></p>
+    <div class="grid-2">
+      <div class="card">
+        <details open>
+          <summary>
+            <span class="chev">▶</span> 1) Mengapa? Karena mereka merasa lebih nyaman membaca dan mencatat di atas kertas.
+          </summary>
+          <p>Rasa familier dan tactile feedback kertas memberi fokus dan kecepatan mencatat.</p>
+        </details>
+        <details>
+          <summary>
+            <span class="chev">▶</span> 2) Mengapa? Karena perangkat digital tidak selalu praktis untuk membaca lama atau memberi catatan cepat.
+          </summary>
+          <p>Postur, silau layar, dan friction UI membuat sesi belajar panjang kurang nyaman.</p>
+        </details>
+        <details>
+          <summary>
+            <span class="chev">▶</span> 3) Mengapa? Karena aplikasi atau tools digital yang ada kurang mendukung pengalaman belajar yang alami.
+          </summary>
+          <p>Fitur seperti menandai, melipat halaman, dan menulis di margin belum terasa alami.</p>
+        </details>
+        <details>
+          <summary>
+            <span class="chev">▶</span> 4) Mengapa? Karena pengembang fokus pada distribusi materi, bukan kenyamanan penggunaan nyata.
+          </summary>
+          <p>Distribusi mudah, namun eksekusi membaca harian sering kurang prioritas.</p>
+        </details>
+        <details>
+          <summary>
+            <span class="chev">▶</span> 5) Mengapa? Karena kebutuhan mendalam mahasiswa belum terjawab oleh solusi digital yang ada.
+          </summary>
+          <p>Butuh kemudahan anotasi, kenyamanan visual, dan fleksibilitas belajar.</p>
+        </details>
+      </div>
+      <aside class="quote">
+        <strong>Akar masalah:</strong> Mahasiswa membutuhkan cara digital yang <em>senyaman media fisik</em> untuk membaca, menandai, dan mengelola materi kuliah.
+      </aside>
+    </div>
+  </section>
+
+  <!-- DEFINISI MASALAH -->
+  <section id="definisi" class="container reveal">
+    <div class="section-kicker">3. Mendefinisikan Masalah</div>
+    <h2 class="section-title">Pernyataan masalah yang berpusat pada pengguna</h2>
+    <blockquote class="quote">
+      “Seorang mahasiswa perguruan tinggi membutuhkan cara digital yang nyaman untuk <strong>membaca, menandai, dan mengelola materi kuliah</strong> karena media fisik masih dianggap lebih praktis, fleksibel, dan mendukung fokus belajar.”
+    </blockquote>
+  </section>
+
+  <!-- SOLUSI -->
+  <section id="solusi" class="container reveal">
+    <div class="section-kicker">Solusi & Fitur Inti</div>
+    <h2 class="section-title">Semua materi dalam satu tempat, anotasi senatural kertas</h2>
+    <div class="grid-2">
+      <article class="card" data-tilt>
+        <h3>Unggah materi</h3>
+        <p>Impor PDF/Docs, kelola per mata kuliah, dan atur folder sesuai semester.</p>
+        <div class="stepper" aria-hidden="true">
+          <div class="step"><div class="num">1</div><div>Drag & drop file</div></div>
+          <div class="step"><div class="num">2</div><div>Otomatis terbaca judul & bab</div></div>
+          <div class="step"><div class="num">3</div><div>Tersinkron ke semua perangkat</div></div>
+        </div>
+      </article>
+      <article class="card" data-tilt>
+        <h3>Anotasi digital</h3>
+        <p>Stabilo, pena, sticky note, dan <em>page fold</em> — terasa cepat dan halus.</p>
+        <p class="muted">Coba tombol ▶️ di pratinjau untuk melihat efek highlight & sticky note.</p>
+      </article>
+      <article class="card" data-tilt>
+        <h3>Sinkronisasi catatan</h3>
+        <p>Catatan otomatis tersimpan dan tersedia di laptop, tablet, dan ponsel.</p>
+      </article>
+      <article class="card" data-tilt>
+        <h3>Fokus belajar</h3>
+        <p>Mode fokus: redupkan elemen distraksi, jaga ritme baca panjang.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- VALIDASI -->
+  <section id="validasi" class="container reveal">
+    <div class="section-kicker">4. Validasi Ide</div>
+    <h2 class="section-title">Smoke Test melalui Landing Page + Prototipe Sederhana</h2>
+
+    <div class="grid-2">
+      <div class="card">
+        <p><strong>Ide solusi awal:</strong> Membuat aplikasi untuk mahasiswa yang dapat mengelola semua materi perkuliahan (buku, modul, catatan) dalam satu tempat.</p>
+        <p><strong>Langkah-langkah:</strong></p>
+        <ol>
+          <li>Buat landing page sederhana yang menjelaskan masalah utama dan menawarkan solusi aplikasi pengelola materi kuliah.</li>
+          <li>Tampilkan mockup atau video demo singkat yang memperlihatkan fitur inti (unggah materi, anotasi digital, sinkronisasi catatan).</li>
+          <li>Tambahkan tombol call-to-action (CTA) seperti “Daftar untuk akses awal gratis” atau “Gabung beta tester.”</li>
+          <li>Sebarkan landing page ke target pasar (komunitas mahasiswa, grup WhatsApp, media sosial kampus).</li>
+          <li>Ukur respon nyata: berapa banyak mahasiswa yang mendaftar atau menunjukkan minat mencoba.</li>
+        </ol>
+        <p><strong>Alasan efektif:</strong> Metode ini menguji minat nyata pengguna tanpa perlu membangun aplikasi lengkap. Data jumlah pendaftar atau <em>feedback</em> dari calon pengguna menunjukkan seberapa mendesak masalah ini dan kelayakan ide.</p>
+      </div>
+      <div class="card">
+        <h3>Ukuran sederhana yang bisa kamu lihat di sini</h3>
+        <ul>
+          <li><span class="check" aria-hidden="true">✓</span> Jumlah pendaftar (tersimpan lokal di browser ini).</li>
+          <li><span class="check" aria-hidden="true">✓</span> Pilih minat: akses awal vs beta tester.</li>
+          <li><span class="check" aria-hidden="true">✓</span> Demo interaksi anotasi di pratinjau.</li>
+        </ul>
+        <p class="muted">Catatan: untuk produksi, sambungkan form ke backend/Google Sheet/Notion/Form backend.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA AKHIR -->
+  <section id="daftar" class="container reveal">
+    <div class="cta" data-tilt>
+      <div class="section-kicker">Ayo Ikut Coba</div>
+      <h2 class="section-title">Gabung akses awal atau jadi beta tester</h2>
+      <p class="muted">Bantu kami memvalidasi ide ini dan wujudkan pengalaman membaca digital yang lebih nyaman.</p>
+      <form class="cta-row" id="signupFormBottom" autocomplete="on" novalidate>
+        <div class="input">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M20 4H4a2 2 0 0 0-2 2v.4l10 6.25L22 6.4V6a2 2 0 0 0-2-2m0 4.2l-8 5L4 8.2V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2z"/></svg>
+          <input name="email" type="email" placeholder="Email kamu" required />
+        </div>
+        <div class="input" role="group" aria-label="Pilih jenis akses">
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer">
+            <input type="radio" name="mode" value="Akses awal" checked /> Akses awal
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;cursor:pointer">
+            <input type="radio" name="mode" value="Beta tester" /> Beta tester
+          </label>
+        </div>
+        <button class="btn primary" type="submit">Daftar Sekarang</button>
+        <div id="formMsgBottom" role="status" aria-live="polite" style="width:100%"></div>
+      </form>
+    </div>
+  </section>
+
+  <footer class="container">
+    <div>© <span id="year"></span> NotaKampus — Proyek validasi ide. <span aria-hidden="true">•</span> <a href="#empati">Empati</a> · <a href="#validasi">Validasi</a></div>
+  </footer>
+
+  <button class="to-top" id="toTop" title="Kembali ke atas" aria-label="Kembali ke atas">↑</button>
+
+  <noscript>
+    <div class="container" style="margin:20px 0;padding:12px;border-radius:10px;background:#fff7;border:1px solid #0002">
+      Halaman ini lebih maksimal dengan JavaScript untuk animasi dan form.
+    </div>
+  </noscript>
+
+  <script>
+    // =========================
+    // UTIL: Query helpers
+    // =========================
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+    // =========================
+    // Scroll progress bar
+    // =========================
+    const progressEl = $('.scroll-progress');
+    const setProgress = () => {
+      const h = document.documentElement;
+      const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight);
+      progressEl.style.transform = `scaleX(${Math.max(0, Math.min(1, scrolled))})`;
+    };
+    document.addEventListener('scroll', setProgress, {passive:true}); setProgress();
+
+    // =========================
+    // Intersection Observer (reveal on scroll)
+    // =========================
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e => {
+        if(e.isIntersecting){ e.target.classList.add('revealed'); io.unobserve(e.target); }
+      });
+    }, {threshold: .12});
+    $$('.reveal').forEach(el => io.observe(el));
+
+    // =========================
+    // Active nav link on scroll
+    // =========================
+    const sections = ['empati','whys','definisi','solusi','validasi','daftar'].map(id => document.getElementById(id));
+    const navLinks = $$('.nav .links a').filter(a => a.getAttribute('href').startsWith('#'));
+    const onScroll = () => {
+      let topSection = sections[0];
+      const y = window.scrollY + 100;
+      for (const s of sections){
+        if (s.offsetTop <= y) topSection = s;
+      }
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + topSection.id));
+      // to-top button
+      $('#toTop').classList.toggle('show', window.scrollY > 400);
+    };
+    document.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+    // =========================
+    // Smooth scroll fallback for "Lihat Demo"
+    // =========================
+    $('#scrollSolusi').addEventListener('click', () => {
+      document.getElementById('solusi').scrollIntoView({behavior:'smooth', block:'center'});
+    });
+
+    // =========================
+    // Tilt effect (lightweight)
+    // =========================
+    $$.call(null,'[data-tilt]').forEach(el => {
+      let rAF; const rect = () => el.getBoundingClientRect();
+      const onMove = (e) => {
+        cancelAnimationFrame(rAF);
+        rAF = requestAnimationFrame(()=>{
+          const b = rect();
+          const cx = b.left + b.width/2, cy = b.top + b.height/2;
+          const dx = (e.clientX - cx) / (b.width/2);
+          const dy = (e.clientY - cy) / (b.height/2);
+          el.style.transform = `rotateX(${(-dy*4).toFixed(2)}deg) rotateY(${(dx*6).toFixed(2)}deg) translateZ(0)`;
+        });
+      };
+      const reset = () => { el.style.transform = 'translateZ(0)'; };
+      el.addEventListener('mousemove', onMove);
+      el.addEventListener('mouseleave', reset);
+    });
+
+    // =========================
+    // Demo anotasi di hero
+    // =========================
+    const playBtn = $('#playDemo'), resetBtn = $('#resetDemo');
+    const hl1 = $('#hl1'), hl2 = $('#hl2'), sticky = $('#sticky');
+
+    function runDemo(){
+      // animasikan highlight seperti stabilo berjalan
+      [hl1, hl2].forEach((el, i)=>{
+        el.style.backgroundImage = 'linear-gradient(90deg, #ffe682 0, #ffe682 100%)';
+        el.style.backgroundRepeat = 'no-repeat';
+        el.style.backgroundSize = '0% 100%';
+        el.style.animation = 'none';
+        // trigger
+        void el.offsetWidth;
+        el.style.animation = 'highlightGrow 1100ms ease forwards';
+        el.style.animationDelay = (i*450)+'ms';
+      });
+      sticky.style.opacity = '0';
+      sticky.style.transform = 'translateZ(40px) translateY(6px) rotate(-1deg)';
+      setTimeout(()=>{
+        sticky.style.transition = 'opacity .35s ease, transform .35s ease';
+        sticky.style.opacity = '1';
+        sticky.style.transform = 'translateZ(40px) translateY(0) rotate(-1deg)';
+      }, 900);
+    }
+    function resetDemo(){
+      [hl1, hl2].forEach(el=>{
+        el.style.animation = 'none';
+        el.style.backgroundSize = '';
+      });
+      sticky.style.opacity = '';
+      sticky.style.transform = 'translateZ(40px) rotate(-1deg)';
+    }
+    // keyframes via CSSOM (so we can guarantee present even if CSS bundling changes)
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes highlightGrow { from{ background-size:0% 100% } to{ background-size:100% 100% } }
+    `;
+    document.head.appendChild(style);
+    playBtn.addEventListener('click', runDemo);
+    resetBtn.addEventListener('click', resetDemo);
+
+    // =========================
+    // Form handling + localStorage "smoke test" metrics
+    // =========================
+    const STORAGE_KEY = 'notakampus_signups';
+    function getSignups(){
+      try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch{ return []; }
+    }
+    function setSignups(arr){ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+    function updateCount(){
+      const n = getSignups().length;
+      $('#countTxt').textContent = `Mahasiswa tertarik: ${n}`;
+    }
+    function handleSubmit(formEl, msgEl){
+      formEl.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const fd = new FormData(formEl);
+        const email = (fd.get('email')||'').toString().trim();
+        const mode = (fd.get('mode')||'Akses awal').toString();
+        if(!email || !/^\S+@\S+\.\S+$/.test(email)){
+          msgEl.innerHTML = '<span style="color:#c0392b">Masukkan email yang valid.</span>';
+          return;
+        }
+        const list = getSignups();
+        if(list.some(x => (x.email||'').toLowerCase() === email.toLowerCase())){
+          msgEl.innerHTML = '<span style="color:#8e44ad">Email ini sudah terdaftar. Terima kasih!</span>';
+          return;
+        }
+        list.push({email, mode, at: new Date().toISOString()});
+        setSignups(list); updateCount();
+        formEl.reset();
+        msgEl.innerHTML = `
+          <span class="check" aria-hidden="true" style="margin-right:8px">✓</span>
+          <strong>Berhasil!</strong> Kami akan menghubungi kamu untuk ${mode.toLowerCase()}.
+        `;
+      });
+    }
+    handleSubmit($('#signupForm'), $('#formMsg'));
+    handleSubmit($('#signupFormBottom'), $('#formMsgBottom'));
+    updateCount();
+
+    // =========================
+    // To top
+    // =========================
+    $('#toTop').addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+    // Year
+    $('#year').textContent = new Date().getFullYear();
+  </script>
+  <style>
+    /* util: visually-hidden for a11y label */
+    .visually-hidden {
+      position: absolute !important;
+      height: 1px; width: 1px; overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap; /* added line */
+    }
+  </style>
+</body>
+</html>
